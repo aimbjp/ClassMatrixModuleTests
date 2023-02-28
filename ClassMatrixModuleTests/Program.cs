@@ -2,6 +2,7 @@
 
 using System;
 using System.Numerics;
+using System.Runtime.InteropServices.JavaScript;
 
 namespace ClassMatrixModuleTests
 {
@@ -20,7 +21,19 @@ namespace ClassMatrixModuleTests
                         matrix = InputMatrix(matrix);
                         break;
                     case '2':
+                        if (matrix != null)
+                        {
+                            matrix.SetProps();
+                            ShowPropMatrix(matrix);
+                        }
+                        else
+                        {
+                            matrix = InputMatrix(matrix);
+                            matrix.SetProps();
+                            ShowPropMatrix(matrix);
+                        }
                         break;
+                        
                     case '3':
                         if (matrix != null)
                         {
@@ -66,7 +79,7 @@ namespace ClassMatrixModuleTests
                 void ShowMenu()
                 {
                     Console.Clear();
-                    Console.WriteLine("Ваша матрица: " +
+                    Console.WriteLine("Ваша матрица:    \n" +
                                       m.ToString() +
                                       "Введите число, на которое ее нужно домножить: \n");
                 }
@@ -87,6 +100,17 @@ namespace ClassMatrixModuleTests
             }
         }
 
+        static void ShowPropMatrix(Matrix matrix)
+        {
+            Console.Clear();
+            Console.WriteLine("Ваша матрица:    \n" +
+                              matrix.ToString());
+            Matrix.ShowProp(matrix);
+            Console.WriteLine("Нажмите на любую кнопку");
+            Console.ReadKey();
+            return;
+        }
+        
         static Matrix InputMatrix(Matrix matrix)
         {
             var flag = true;
@@ -128,6 +152,8 @@ namespace ClassMatrixModuleTests
     {
         public double[][] data;
 
+        private Matrix(int n){}
+        
         public Matrix(int nRows, int nCols)
         {
             if (nRows < 1 || nCols < 1)
@@ -147,6 +173,7 @@ namespace ClassMatrixModuleTests
                     this[i, j] = (double)j;
                 }
             }
+            SetProps();
         }
 
         public Matrix(double[][] initData)
@@ -162,8 +189,60 @@ namespace ClassMatrixModuleTests
                     this[i, j] = (double)j;
                 }
             }
+            
+            SetProps();
         }
 
+        public void SetProps()
+        {
+            IsSquared = true;
+            IsUnity = true;
+            IsDiagonal = true;
+            IsEmpty = true;
+
+            if (Rows == Cols)
+            {
+                Size = Rows;
+                IsSquared = true;
+                if (Rows == 0)
+                {
+                    IsUnity = false;
+                    IsDiagonal = false;
+                }
+            }
+            else
+            {
+                IsSquared = false;
+                Size = 0;
+            }
+
+            if (Rows != Cols)
+            {
+                IsUnity = false;
+            }
+            
+            for (int i = 0; i < Rows; i++)
+            {
+                for (int j = 0; j < Cols; j++)
+                {
+                    if (i != j && !data[i][j].Equals(0))
+                    {
+                        IsDiagonal = false;
+                        IsUnity = false;
+                    }
+                    if (i == j && !data[i][j].Equals(1))
+                    {
+                        IsUnity = false;
+                    }
+
+                    if (!data[i][j].Equals(0))
+                    {
+                        IsEmpty = false;
+                    }
+                }
+            }
+        }
+        
         public double this[int i, int j]
         {
             get => data[i][j];
@@ -174,11 +253,11 @@ namespace ClassMatrixModuleTests
         public int Cols { get; }
         
         //нужно добавить определения (тру или фолс для матриц, добавить в конструктор)
-        public int? Size { get; }
-        public bool IsSquared { get; }
-        public bool IsEmpty { get; }
-        public bool IsUnity { get; }
-        public bool IsDiagonal { get; }
+        public int? Size { get; set; }
+        public bool IsSquared { get; set; }
+        public bool IsEmpty { get; set; }
+        public bool IsUnity { get; set;  }
+        public bool IsDiagonal { get; set;  }
 
 
         public static Matrix operator *(Matrix m1, double d)
@@ -193,16 +272,23 @@ namespace ClassMatrixModuleTests
 
             return m1;
         }
-        // нужно доделать методы некоторые для класса матриц
+
         public static explicit operator Matrix(double[][] arr)
         {
-            Matrix res = new Matrix(1, 1);
-            return res;
+            return new Matrix(arr);
         }
 
         public Matrix Transpose()
         {
-            Matrix res = new Matrix(1, 1);
+            Matrix res = new Matrix(Cols, Rows);
+            for (int i = 0; i < Rows; i++)
+            {
+                for (int j = 0; j < Cols; j++)
+                {
+                    res[j, i] = this[i, j];
+                }
+            }
+
             return res;
         }
 
@@ -225,16 +311,45 @@ namespace ClassMatrixModuleTests
 
         public static Matrix GetUnity(int Size)
         {
-            Matrix res = new Matrix(1, 1);
+            Matrix res = new Matrix(Size);
+            for (int i = 0; i < Size; i++)
+            {
+                for (int j = 0; j < Size; j++)
+                {
+                    if (i != j)
+                    {
+                        res[i, j] = 0;
+                    }
+                    else res[i, j] = 1;
+                }
+            }
+
             return res;
         }
 
         public static Matrix GetEmpty(int Size)
         {
-            Matrix res = new Matrix(1, 1);
+            Matrix res = new Matrix(Size);
+
+            for (int i = 0; i < Size; i++)
+            {
+                for (int j = 0; j < Size; j++)
+                {
+                    res[i, j] = 0;
+                }
+            }
+
             return res;
         }
 
+        public static void ShowProp(Matrix matrix)
+        {
+            Console.WriteLine(  (matrix.IsSquared ? "Квадратная;" : "Не квадратная; ") + "\n" +
+                                (matrix.IsDiagonal ? "Диагональная;" : "Не диагональная; ") + "\n" + 
+                                (matrix.IsEmpty ? "Нулевая;" : "Ненулевая;") + "\n" +
+                                (matrix.IsUnity ? "Единичная;" : "Не единичная; ") + "\n");
+        }
+        
         public static bool TryParse(string s, out Matrix m)
         {
             if (s == null)
@@ -249,19 +364,28 @@ namespace ClassMatrixModuleTests
             for (int i = 0; i < subsRows.Length; i++)
             {
                 var element = subsRows[i].Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                if (lenCols == element.Length)
+                if (lenCols == element.Length )
                 {
                     for (int j = 0; j < lenCols; j++)
                     {
-                        m[i, j] = double.Parse(element[j]);
+                        try
+                        {
+                            m[i, j] = double.Parse(element[j]);
+                        }
+                        catch (Exception e)
+                        {
+                            Console.WriteLine("Неверный ввод, нужно вводить только числа");
+                            return false;
+                        }
                     }
                 }
                 else
                 {
-                    Console.WriteLine("Неверный ввод");
+                    Console.WriteLine("Неверный ввод, длина всех строк должна быть одинаковой");
                     return false;
                 }
             }
+            
 
             return true;
         }
