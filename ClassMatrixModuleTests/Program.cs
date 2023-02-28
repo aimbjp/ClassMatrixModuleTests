@@ -148,7 +148,7 @@ namespace ClassMatrixModuleTests
         }
     }
 
-    class Matrix
+    public class Matrix
     {
         public double[][] data;
 
