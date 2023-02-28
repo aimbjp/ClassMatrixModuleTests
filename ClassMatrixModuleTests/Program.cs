@@ -186,7 +186,7 @@ namespace ClassMatrixModuleTests
                 data[i] = new double[Cols];
                 for (int j = 0; j < Cols; j++)
                 {
-                    this[i, j] = (double)j;
+                    this[i, j] = (double)initData[i][j];
                 }
             }
             
@@ -311,7 +311,7 @@ namespace ClassMatrixModuleTests
 
         public static Matrix GetUnity(int Size)
         {
-            Matrix res = new Matrix(Size);
+            Matrix res = new Matrix(Size, Size);
             for (int i = 0; i < Size; i++)
             {
                 for (int j = 0; j < Size; j++)
@@ -329,7 +329,7 @@ namespace ClassMatrixModuleTests
 
         public static Matrix GetEmpty(int Size)
         {
-            Matrix res = new Matrix(Size);
+            Matrix res = new Matrix(Size, Size);
 
             for (int i = 0; i < Size; i++)
             {
@@ -386,6 +386,7 @@ namespace ClassMatrixModuleTests
                 }
             }
             
+            m.SetProps();
 
             return true;
         }
